@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Carbon Intensity & Weather Correlation Explorer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+body {
+  background: #f8f9fa;
+  font-family: "Poppins", sans-serif;
+}
+.container {
+  margin-top: 40px;
+  max-width: 800px;
+}
+#chart {
+  height: 480px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2 class="mb-4 text-center">🌿 Carbon Intensity & Weather Correlation Explorer</h2>
+  <p class="text-muted text-center">Choose a country and date range to explore how carbon intensity relates to weather.</p>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-5">
+      <label for="country" class="form-label">Select Country</label>
+      <select id="country" class="form-select">
+        <option value="GB">United Kingdom</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="ES">Spain</option>
+        <option value="IT">Italy</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="start" class="form-label">Start Date</label>
+      <input type="date" id="start" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label for="end" class="form-label">End Date</label>
+      <input type="date" id="end" class="form-control">
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+      <button id="loadData" class="btn btn-success w-100">Go</button>
+    </div>
+  </div>
+
+  <div id="status" class="text-center text-muted mb-3"></div>
+  <div id="chart"></div>
+</div>
+
+<script>
+const apiWeather = "https://archive-api.open-meteo.com/v1/archive";
+
+document.getElementById("loadData").addEventListener("click", async () => {
+  const country = document.getElementById("country").value;
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  const status = document.getElementById("status");
+  const chartDiv = document.getElementById("chart");
+
+  if (!start || !end) {
+    alert("Please select start and end dates.");
+    return;
+  }
+
+  status.innerText = "Loading data...";
+  chartDiv.innerHTML = "";
+
+  // simple lat/lon lookup for demo
+  const coords = {
+    "GB": [55.3781, -3.4360],
+    "DE": [51.1657, 10.4515],
+    "FR": [46.2276, 2.2137],
+    "ES": [40.4637, -3.7492],
+    "IT": [41.8719, 12.5674]
+  };
+
+  const [lat, lon] = coords[country];
+
+  // get weather (temperature & wind speed)
+  const urlWeather = `${apiWeather}?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&hourly=temperature_2m,wind_speed_10m&timezone=auto`;
+  const wRes = await fetch(urlWeather);
+  const wData = await wRes.json();
+
+  if (!wData.hourly) {
+    status.innerText = "No weather data found.";
+    return;
+  }
+
+  const temps = wData.hourly.temperature_2m;
+  const winds = wData.hourly.wind_speed_10m;
+
+  // use "proxy" carbon data = (100 - wind speed * 5 + temperature) just to simulate
+  const carbonIntensity = temps.map((t, i) => 100 - winds[i]*5 + t);
+
+  // compute simple Pearson correlation between wind & carbon
+  const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const corr = (x, y) => {
+    const mx = mean(x), my = mean(y);
+    const num = x.map((xi,i)=> (xi-mx)*(y[i]-my)).reduce((a,b)=>a+b,0);
+    const den = Math.sqrt(x.map(xi=>(xi-mx)**2).reduce((a,b)=>a+b,0) *
+                          y.map(yi=>(yi-my)**2).reduce((a,b)=>a+b,0));
+    return (num/den).toFixed(2);
+  };
+
+  const corrWind = corr(winds, carbonIntensity);
+  const corrTemp = corr(temps, carbonIntensity);
+
+  // draw scatter plots
+  const trace1 = {
+    x: winds, y: carbonIntensity, mode: "markers",
+    name: "Wind vs Carbon",
+    marker: {color: "green"}
+  };
+  const trace2 = {
+    x: temps, y: carbonIntensity, mode: "markers",
+    name: "Temp vs Carbon",
+    marker: {color: "orange"}
+  };
+
+  const layout = {
+    title: `Correlation — Wind: ${corrWind}, Temp: ${corrTemp}`,
+    xaxis: {title: "Variable Value"},
+    yaxis: {title: "Carbon Intensity (proxy gCO₂/kWh)"},
+    paper_bgcolor: "#f8f9fa",
+    plot_bgcolor: "#f8f9fa"
+  };
+
+  Plotly.newPlot(chartDiv, [trace1, trace2], layout);
+
+  status.innerText = `Data loaded for ${country} (${start} → ${end})`;
+});
+</script>
+</body>
+</html>

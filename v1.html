@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Carbon Intensity & Weather Correlation Explorer</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+body { background: #f8f9fa; font-family: "Poppins", sans-serif; }
+.container { margin-top: 40px; max-width: 800px; }
+#chart { height: 480px; }
+.share-buttons { margin-top: 20px; text-align: center; }
+footer { margin-top: 30px; text-align: center; color: #6c757d; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2 class="mb-4 text-center">🌿 Carbon Intensity & Weather Correlation Explorer</h2>
+  <p class="text-muted text-center">Choose a country and date range to explore how carbon intensity relates to weather.</p>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-5">
+      <label for="country" class="form-label">Select Country</label>
+      <select id="country" class="form-select">
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="ES">Spain</option>
+        <option value="IT">Italy</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="start" class="form-label">Start Date</label>
+      <input type="date" id="start" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label for="end" class="form-label">End Date</label>
+      <input type="date" id="end" class="form-control">
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+      <button id="loadData" class="btn btn-success w-100">Go</button>
+    </div>
+  </div>
+
+  <div id="status" class="text-center text-muted mb-3"></div>
+  <div id="chart"></div>
+
+  <div class="share-buttons">
+    <a id="shareLinkedIn" href="#" target="_blank" class="btn btn-primary me-2">Share on LinkedIn</a>
+    <a id="shareX" href="#" target="_blank" class="btn btn-info">Share on X</a>
+  </div>
+
+  <footer>Developed by Gamze Deniz</footer>
+</div>
+
+<script>
+let cache = {};
+
+document.getElementById("loadData").addEventListener("click", async () => {
+  const country = document.getElementById("country").value;
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  const status = document.getElementById("status");
+  const chartDiv = document.getElementById("chart");
+
+  if (!start || !end) { alert("Please select start and end dates."); return; }
+
+  status.innerText = "Loading data...";
+  chartDiv.innerHTML = "";
+
+  const cacheKey = `${country}_${start}_${end}`;
+  if (cache[cacheKey]) {
+    drawChart(cache[cacheKey]);
+    status.innerText = `Data loaded from cache for ${country} (${start} → ${end})`;
+    return;
+  }
+
+  const coords = { "DE":[51.1657,10.4515], "FR":[46.2276,2.2137], "ES":[40.4637,-3.7492], "IT":[41.8719,12.5674] };
+  const [lat, lon] = coords[country];
+
+  // Weather Data
+  const urlWeather = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&hourly=temperature_2m,wind_speed_10m&timezone=auto`;
+  const wData = await (await fetch(urlWeather)).json();
+  if (!wData.hourly) { status.innerText="No weather data found."; return; }
+
+  const temps = wData.hourly.temperature_2m;
+  const winds = wData.hourly.wind_speed_10m;
+
+  // Carbon Intensity from OPSD
+  const cData = await (await fetch("https://data.open-power-system-data.org/carbon-intensity/2024-10-01/carbon_intensity_day-ahead.json")).json();
+  let carbon = cData.data.filter(d => {
+    const date = d.time.slice(0,10);
+    return date>=start && date<=end;
+  }).map(d=>d.intensity_actual || d.intensity_forecast);
+
+  const len = Math.min(temps.length, carbon.length);
+  const chartData = { temps: temps.slice(0,len), winds: winds.slice(0,len), carbon: carbon.slice(0,len) };
+  cache[cacheKey] = chartData;
+
+  drawChart(chartData);
+  status.innerText = `Data loaded for ${country} (${start} → ${end})`;
+
+  // Share links
+  const pageUrl = encodeURIComponent(window.location.href);
+  const shareText = encodeURIComponent(`Check out this Carbon Intensity & Weather Correlation Explorer for ${country}`);
+  document.getElementById("shareLinkedIn").href = `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`;
+  document.getElementById("shareX").href = `https://twitter.com/intent/tweet?url=${pageUrl}&text=${shareText}`;
+});
+
+function drawChart({temps,winds,carbon}) {
+  const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const corr = (x,y)=>{
+    const mx=mean(x), my=mean(y);
+    const num=x.map((xi,i)=>(xi-mx)*(y[i]-my)).reduce((a,b)=>a+b,0);
+    const den=Math.sqrt(x.map(xi=>(xi-mx)**2).reduce((a,b)=>a+b,0)*y.map(yi=>(yi-my)**2).reduce((a,b)=>a+b,0));
+    return (num/den).toFixed(2);
+  };
+  const corrWind = corr(winds,carbon);
+  const corrTemp = corr(temps,carbon);
+
+  const trace1 = { x:winds, y:carbon, mode:"markers", name:"Wind vs Carbon", marker:{color:"green"} };
+  const trace2 = { x:temps, y:carbon, mode:"markers", name:"Temp vs Carbon", marker:{color:"orange"} };
+
+  const layout = {
+    title: `Correlation — Wind: ${corrWind}, Temp: ${corrTemp}`,
+    xaxis:{title:"Variable Value"}, yaxis:{title:"Carbon Intensity (gCO₂/kWh)"},
+    paper_bgcolor:"#f8f9fa", plot_bgcolor:"#f8f9fa"
+  };
+
+  Plotly.react(document.getElementById("chart"), [trace1, trace2], layout);
+}
+</script>
+</body>
+</html>

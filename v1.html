@@ -3,72 +3,126 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Carbon Intensity & Weather Correlation Explorer</title>
+<title>Carbon & Weather Correlation Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <style>
+  /* Modern, Tailwind-Inspired Styling */
   :root {
-    --bg-color: #f4f7f6;
+    --bg-color: #f8fafc; /* Tailwind gray-50 */
     --card-bg: #ffffff;
-    --text-color: #333;
-    --primary-color: #28a745;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --text-color: #1f2937; /* Tailwind gray-800 */
+    --primary-color: #4f46e5; /* Tailwind indigo-600 */
+    --secondary-color: #3b82f6; /* Tailwind blue-500 */
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
   body {
     background-color: var(--bg-color);
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: var(--text-color);
   }
   .container {
-    padding-top: 40px;
-    padding-bottom: 40px;
+    max-width: 1400px;
   }
   .card {
     border: none;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
+    border-radius: 1rem; /* Daha yuvarlak köşeler */
+    box-shadow: var(--shadow-lg);
     transition: all 0.3s ease-in-out;
   }
-  .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  .header-card {
+    background: var(--primary-color);
     color: white;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border-bottom: none;
-    padding: 1.25rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+  }
+  .header-card h1 {
+    font-weight: 700;
   }
   .main-title {
-    font-weight: 700;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    font-weight: 600;
+    color: var(--text-color);
   }
-  #chart {
-    min-height: 480px;
+  .form-select, .form-control {
+    border-radius: 0.5rem;
+  }
+  #goButton {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    font-weight: 600;
+    height: 100%;
+    border-radius: 0.5rem;
+  }
+  #goButton:hover {
+    background-color: #4338ca; /* Daha koyu indigo */
+    border-color: #4338ca;
+  }
+  .nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-color: var(--primary-color) var(--primary-color) var(--card-bg);
+    font-weight: 600;
+  }
+  .nav-tabs .nav-link {
+    color: #6b7280; /* Tailwind gray-500 */
+  }
+  /* Accordion Styling for modern look */
+  .accordion-item {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: var(--shadow-lg);
+  }
+  .accordion-header .accordion-button {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      font-weight: 600;
+      border-radius: 1rem;
+      padding: 1.5rem;
+  }
+  .accordion-header .accordion-button:not(.collapsed) {
+      color: var(--primary-color);
+      background-color: #f3f4f6; /* Tailwind gray-100 */
+      box-shadow: none;
+      border-bottom: 1px solid #e5e7eb;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+  }
+  .accordion-button::after {
+      filter: none; /* İkon rengini sıfırla */
+  }
+  #correlation-insight {
+      border-left: 5px solid var(--secondary-color);
+      background-color: #eff6ff; /* Tailwind blue-50 */
+      color: #1e40af; /* Tailwind blue-800 */
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+  }
+  /* Chart container minimum height */
+  #chart-tabs-content > div {
+    min-height: 480px; 
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .form-label {
-    font-weight: 500;
-  }
-  #goButton {
-    height: 100%;
-    font-weight: 500;
   }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="text-center mb-5">
-    <h1 class="display-5 fw-bold" style="color: #667eea;">🌿 Carbon & Weather Correlation Explorer</h1>
-    <p class="lead text-muted">This tool visualizes the simulated relationship between carbon intensity and weather data (wind, temperature) for selected European countries. Select a country and date range, then click "Analyze" to begin.</p>
+<div class="container my-5">
+  
+  <div class="header-card text-center">
+    <h1 class="display-5 fw-bold mb-2">🌍 Carbon & Weather Correlation Dashboard</h1>
+    <p class="lead mb-0">Explore simulated relationships between carbon intensity and key weather factors for effective energy market analysis.</p>
   </div>
   
   <div class="card mb-4">
     <div class="card-body p-4">
+      <h3 class="mb-4 main-title">Data Filters</h3>
       <div class="row g-3 align-items-end">
         <div class="col-md-4">
           <label for="country" class="form-label">Select Country</label>
@@ -81,80 +135,114 @@
           </select>
         </div>
         <div class="col-md-3">
-          <label for="start" class="form-label">Start Date</label>
+          <label for="start" class="form-label">Start Date (Max 30 days ago)</label>
           <input type="date" id="start" class="form-control form-control-lg">
         </div>
         <div class="col-md-3">
-          <label for="end" class="form-label">End Date</label>
+          <label for="end" class="form-label">End Date (Max 2 days ago)</label>
           <input type="date" id="end" class="form-control form-control-lg">
         </div>
         <div class="col-md-2">
-          <button id="goButton" class="btn btn-success btn-lg w-100">
+          <button id="goButton" class="btn btn-primary btn-lg w-100">
             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-            <span class="button-text">Analyze</span>
+            <span class="button-text">Analyze Data</span>
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header text-center">
-        <h2 class="main-title mb-0">📊 Correlation Chart</h2>
-    </div>
-    <div class="card-body">
-      <div id="status" class="text-center text-muted my-3">Please select a range for analysis.</div>
-      <div id="chart"></div>
+  <div class="card mb-4">
+    <div class="card-body p-0">
+      <div class="p-4">
+        <h3 class="main-title">Visualization & Insights</h3>
+      </div>
+      
+      <ul class="nav nav-tabs nav-fill px-4" id="chartTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="scatter-tab" data-bs-toggle="tab" data-bs-target="#scatter-pane" type="button" role="tab" aria-controls="scatter-pane" aria-selected="true">Scatter Plot (Relationship)</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="timeseries-tab" data-bs-toggle="tab" data-bs-target="#timeseries-pane" type="button" role="tab" aria-controls="timeseries-pane" aria-selected="false">Time Series (Temporal View)</button>
+        </li>
+      </ul>
+      
+      <div class="tab-content pt-3" id="chart-tabs-content">
+        <div class="tab-pane fade show active" id="scatter-pane" role="tabpanel" aria-labelledby="scatter-tab">
+          <div id="status" class="text-center text-muted my-3 px-4">Please select a range for analysis.</div>
+          <div id="scatter-chart"></div>
+        </div>
+        <div class="tab-pane fade" id="timeseries-pane" role="tabpanel" aria-labelledby="timeseries-tab">
+          <div id="timeseries-chart"></div>
+        </div>
+      </div>
+      
+      <div id="correlation-insight" class="alert d-none mx-4 mt-3 mb-4" role="alert">
+        </div>
+      
     </div>
   </div>
 </div>
 
 <div class="container my-5">
-  <div class="card">
-    <div class="card-header text-center">
-        <h2 class="main-title mb-0">💡 Technical Briefing & FAQ</h2>
-    </div>
-    <div class="card-body p-4 p-md-5">
-      <p class="fs-5">
-        <strong>Context for 2025:</strong> As of 2025, European energy grids are at a pivotal point in their transition. In the **United Kingdom**, continued expansion of offshore wind, such as the Dogger Bank Wind Farm becoming fully operational, is projected to drive the grid's carbon intensity to record lows, frequently dropping below 100 gCO₂/kWh and targeting a fully decarbonized system by 2035 (National Grid ESO, 2024). Across the **EU**, the REPowerEU plan has accelerated the deployment of renewables, aiming to reduce fossil fuel dependency. This has resulted in a grid that is increasingly influenced by meteorological conditions, making the analysis of weather and energy data more critical than ever.
-      </p>
-      <hr class="my-4">
-      <h3 class="mb-3">Q: Why is correlation analysis a cornerstone of modern energy markets?</h3>
-      
-      <p class="lead">A: Correlation analysis is a foundational statistical method for quantifying the relationship between two or more variables. In an energy sector increasingly dominated by variable renewable energy sources (**vRES**), this analysis transcends academic exercise; it is an indispensable tool for financial trading, risk management, and maintaining grid stability.</p>
-      
-      <h4 class="mt-4">1. Enhancing Energy Trading and Price Forecasting</h4>
-      <p>Wholesale electricity markets are characterized by high price volatility, driven by the real-time balance of supply and demand. Correlation analysis provides a critical edge:</p>
-      <ul>
-        <li>**Supply-Side Forecasting:** The power output of a wind farm exhibits a strong, non-linear correlation with wind speed, while solar farm output is directly correlated with solar irradiance. Energy traders use sophisticated models, built upon these fundamental correlations, to forecast renewable generation. An accurate forecast of a windy, sunny day allows traders to predict a surplus of low-cost energy, leading to lower spot prices. They can then build strategies around these predictions using financial instruments like futures and derivatives to hedge risk or capitalize on arbitrage opportunities (IEA, 2023).</li>
-        <li>**Demand-Side Forecasting:** Electricity demand is strongly correlated with ambient temperature. A high positive correlation exists during summer due to air conditioning loads, and a high negative correlation exists in winter for heating. By precisely quantifying this relationship, utilities and traders can predict demand surges during heatwaves or cold snaps, which cause significant price spikes.</li>
-      </ul>
+  <div class="accordion" id="technicalAccordion">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingOne">
+        <button 
+          class="accordion-button collapsed" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#collapseOne" 
+          aria-expanded="false" 
+          aria-controls="collapseOne"
+        >
+          <span class="fw-bold fs-5">💡 Technical Briefing & FAQ: Why is correlation analysis a cornerstone of modern energy markets?</span>
+        </button>
+      </h2>
+      <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#technicalAccordion">
+        <div class="accordion-body p-4 p-md-5">
+          <p class="fs-5">
+            <strong>Context for 2025:</strong> As of 2025, European energy grids are at a pivotal point in their transition. In the **United Kingdom**, continued expansion of offshore wind, such as the Dogger Bank Wind Farm becoming fully operational, is projected to drive the grid's carbon intensity to record lows, frequently dropping below 100 gCO₂/kWh and targeting a fully decarbonized system by 2035 (National Grid ESO, 2024). Across the **EU**, the REPowerEU plan has accelerated the deployment of renewables, aiming to reduce fossil fuel dependency. This has resulted in a grid that is increasingly influenced by meteorological conditions, making the analysis of weather and energy data more critical than ever.
+          </p>
+          <hr class="my-4">
+          
+          <p class="lead">A: Correlation analysis is a foundational statistical method for quantifying the relationship between two or more variables. In an energy sector increasingly dominated by variable renewable energy sources (**vRES**), this analysis transcends academic exercise; it is an indispensable tool for financial trading, risk management, and maintaining grid stability.</p>
+          
+          <h4 class="mt-4">1. Enhancing Energy Trading and Price Forecasting</h4>
+          <p>Wholesale electricity markets are characterized by high price volatility, driven by the real-time balance of supply and demand. Correlation analysis provides a critical edge:</p>
+          <ul>
+            <li>**Supply-Side Forecasting:** The power output of a wind farm exhibits a strong, non-linear correlation with wind speed, while solar farm output is directly correlated with solar irradiance. Energy traders use sophisticated models, built upon these fundamental correlations, to forecast renewable generation. An accurate forecast of a windy, sunny day allows traders to predict a surplus of low-cost energy, leading to lower spot prices. They can then build strategies around these predictions using financial instruments like futures and derivatives to hedge risk or capitalize on arbitrage opportunities (IEA, 2023).</li>
+            <li>**Demand-Side Forecasting:** Electricity demand is strongly correlated with ambient temperature. A high positive correlation exists during summer due to air conditioning loads, and a high negative correlation exists in winter for heating. By precisely quantifying this relationship, utilities and traders can predict demand surges during heatwaves or cold snaps, which cause significant price spikes.</li>
+          </ul>
 
-      <h4 class="mt-4">2. Optimizing Renewable Asset Management and Grid Stability</h4>
-      <p>For physical asset operators and grid managers, correlation is key to operational excellence:</p>
-      <ul>
-        <li>**Asset Management:** Owners of renewable assets use correlation analysis to create "power curves" that predict output based on weather forecasts. This is essential for meeting obligations under Power Purchase Agreements (**PPAs**) and for scheduling critical maintenance during periods of forecasted low wind or sun, thereby minimizing revenue loss (BloombergNEF, 2024).</li>
-        <li>**Grid Balancing:** Grid operators like the UK's National Grid ESO or Europe's ENTSO-E must ensure system stability second-by-second. They analyze the correlation between large-scale weather patterns (e.g., an approaching frontal system) and the aggregate output of regional renewable assets. This allows them to proactively dispatch **ancillary services**, such as battery storage or fast-ramping gas turbines, to seamlessly balance the intermittency of renewables.</li>
-      </ul>
+          <h4 class="mt-4">2. Optimizing Renewable Asset Management and Grid Stability</h4>
+          <p>For physical asset operators and grid managers, correlation is key to operational excellence:</p>
+          <ul>
+            <li>**Asset Management:** Owners of renewable assets use correlation analysis to create "power curves" that predict output based on weather forecasts. This is essential for meeting obligations under Power Purchase Agreements (**PPAs**) and for scheduling critical maintenance during periods of forecasted low wind or sun, thereby minimizing revenue loss (BloombergNEF, 2024).</li>
+            <li>**Grid Balancing:** Grid operators like the UK's National Grid ESO or Europe's ENTSO-E must ensure system stability second-by-second. They analyze the correlation between large-scale weather patterns (e.g., an approaching frontal system) and the aggregate output of regional renewable assets. This allows them to proactively dispatch **ancillary services**, such as battery storage or fast-ramping gas turbines, to seamlessly balance the intermittency of renewables.</li>
+          </ul>
 
-      <div class="alert alert-warning mt-4" role="alert">
-        <h5 class="alert-heading">⚠️ A Critical Distinction: Correlation Does Not Imply Causation</h5>
-        <p>In scientific and financial applications, it is crucial to distinguish **correlation** from **causation**. A correlation may flag a statistically significant relationship, but it does not explain the underlying causal mechanism. For instance, an observed correlation between cloud cover and grid instability does not mean clouds directly cause instability. The causal chain is more complex: clouds causally reduce solar irradiance, which reduces photovoltaic generation, creating a supply-demand imbalance that, if unmanaged, can lead to frequency deviations and instability. Correlation identifies the high-level relationship; deep domain expertise is required to establish and model the causal links.</p>
+          <div class="alert alert-warning mt-4" role="alert">
+            <h5 class="alert-heading">⚠️ A Critical Distinction: Correlation Does Not Imply Causation</h5>
+            <p>In scientific and financial applications, it is crucial to distinguish **correlation** from **causation**. A correlation may flag a statistically significant relationship, but it does not explain the underlying causal mechanism. For instance, an observed correlation between cloud cover and grid instability does not mean clouds directly cause instability. The causal chain is more complex: clouds causally reduce solar irradiance, which reduces photovoltaic generation, creating a supply-demand imbalance that, if unmanaged, can lead to frequency deviations and instability. Correlation identifies the high-level relationship; deep domain expertise is required to establish and model the causal links.</p>
+          </div>
+
+          <p class="mt-4">
+            <strong>In summary,</strong> the tool on this page provides a simplified interface to explore these vital relationships. In the real world, these same principles—dramatically scaled and integrated into complex machine learning algorithms—form the analytical backbone of the modern, decarbonizing energy grid.
+          </p>
+
+          <h5 class="mt-4">References</h5>
+          <ul class="list-unstyled small text-muted">
+              <li><strong>BloombergNEF. (2024).</strong> <em>Global Renewables Outlook Report.</em></li>
+              <li><strong>IEA. (2023).</strong> <em>Electricity Market Report 2023.</em> International Energy Agency.</li>
+              <li><strong>National Grid ESO. (2024).</strong> <em>Future Energy Scenarios (FES).</em></li>
+          </ul>
+        </div>
       </div>
-
-      <p class="mt-4">
-        <strong>In summary,</strong> the tool on this page provides a simplified interface to explore these vital relationships. In the real world, these same principles—dramatically scaled and integrated into complex machine learning algorithms—form the analytical backbone of the modern, decarbonizing energy grid.
-      </p>
-
-      <h5 class="mt-4">References</h5>
-      <ul class="list-unstyled small text-muted">
-          <li><strong>BloombergNEF. (2024).</strong> <em>Global Renewables Outlook Report.</em></li>
-          <li><strong>IEA. (2023).</strong> <em>Electricity Market Report 2023.</em> International Energy Agency.</li>
-          <li><strong>National Grid ESO. (2024).</strong> <em>Future Energy Scenarios (FES).</em></li>
-      </ul>
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const apiWeather = "https://archive-api.open-meteo.com/v1/archive";
 
@@ -165,80 +253,133 @@ document.addEventListener("DOMContentLoaded", () => {
   const startDateInput = document.getElementById("start");
   const endDateInput = document.getElementById("end");
   const statusDiv = document.getElementById("status");
-  const chartDiv = document.getElementById("chart");
-  // const welcomeWidget = document.getElementById("welcome-widget"); // Widget kaldırıldı
+  const scatterChartDiv = document.getElementById("scatter-chart");
+  const timeseriesChartDiv = document.getElementById("timeseries-chart");
+  const insightDiv = document.getElementById("correlation-insight");
 
-  // === İlk Yükleme Ayarları ===
-  // isFirstLoad bayrağı artık sadece widget'ı yönetmek için gerekli değil.
-  
-  // Varsayılan tarihleri ayarla (son 7 gün)
+  // === İlk Yükleme Ayarları ve Hata Önleme ===
   const today = new Date();
-  const weekAgo = new Date();
-  weekAgo.setDate(today.getDate() - 7);
+  
+  // API stabilitesi için varsayılan bitiş tarihini 2 gün geriye çekin.
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(today.getDate() - 2); 
+  
+  const maxPastDate = new Date();
+  maxPastDate.setDate(today.getDate() - 30);
+  
+  // Varsayılan başlangıç aralığı: İki gün öncesi - 7 gün.
+  const defaultStart = new Date();
+  defaultStart.setDate(twoDaysAgo.getDate() - 7);
   
   // Format: YYYY-MM-DD
   const formatDate = (date) => date.toISOString().split('T')[0];
-  endDateInput.value = formatDate(today);
-  startDateInput.value = formatDate(weekAgo);
+  
+  // Tarih kutularının default değerleri ve limitleri ayarlandı
+  endDateInput.value = formatDate(twoDaysAgo); 
+  endDateInput.max = formatDate(twoDaysAgo); // Gelecek ve çok güncel tarihi engelle
+  
+  startDateInput.value = formatDate(defaultStart);
+  startDateInput.min = formatDate(maxPastDate); 
+  startDateInput.max = formatDate(twoDaysAgo); // Bitiş tarihinden sonrası seçimi engellendi
 
-  // === Buton Yönetimi ===
+  // === Buton ve Yükleme Yönetimi ===
   const setLoadingState = (isLoading) => {
     const spinner = goButton.querySelector(".spinner-border");
     const buttonText = goButton.querySelector(".button-text");
-    
     if (isLoading) {
       goButton.disabled = true;
       spinner.classList.remove("d-none");
       buttonText.innerText = "Loading...";
+      insightDiv.classList.add('d-none');
     } else {
       goButton.disabled = false;
       spinner.classList.add("d-none");
-      buttonText.innerText = "Analyze";
+      buttonText.innerText = "Analyze Data";
     }
   };
 
+  // === Korelasyon Yorumlayıcısı ===
+  const getCorrelationInsight = (corrValue, variableName) => {
+    const absCorr = Math.abs(corrValue);
+    let strength = '';
+    let direction = '';
+    let action = '';
+
+    if (absCorr >= 0.75) strength = 'Very Strong';
+    else if (absCorr >= 0.50) strength = 'Strong';
+    else if (absCorr >= 0.30) strength = 'Moderate';
+    else strength = 'Weak/Negligible';
+
+    if (corrValue > 0.30) {
+      direction = 'a positive relationship';
+      action = `This means when ${variableName} increases, Carbon Intensity tends to **increase** significantly.`;
+    } else if (corrValue < -0.30) {
+      direction = 'a negative relationship';
+      action = `This means when ${variableName} increases, Carbon Intensity tends to **decrease** significantly.`;
+    } else {
+      direction = 'a very weak or no relationship';
+      action = `Other factors (like neighboring grid imports or temperature) likely have a greater influence on Carbon Intensity in this period.`;
+    }
+
+    return `<strong>${variableName} Correlation (${corrValue.toFixed(2)}):</strong> ${strength} (${direction}). ${action}`;
+  };
+
+
   // === Ana Fonksiyon: Veri Yükleme ve Görselleştirme ===
   const loadData = async () => {
-    // Hoş geldiniz widget'ını gizleme kodu kaldırıldı.
-
     const country = countrySelect.value;
     const start = startDateInput.value;
     const end = endDateInput.value;
 
-    if (!start || !end) {
-      alert("Please select start and end dates.");
-      return;
+    // Tarih kontrolü
+    if (new Date(start) > new Date(end)) {
+        statusDiv.innerText = "❌ Start date cannot be after the end date.";
+        return;
     }
-
+    
     setLoadingState(true);
-    statusDiv.innerText = `Loading data for ${country}...`;
-    chartDiv.innerHTML = ""; // Clear previous chart
+    statusDiv.innerText = `Loading data for ${country} (${start} → ${end})...`;
+    scatterChartDiv.innerHTML = "";
+    timeseriesChartDiv.innerHTML = "";
+    insightDiv.classList.add('d-none');
 
-    // Demo for simple latitude/longitude data
+
     const coords = {
       "GB": [55.3781, -3.4360], "DE": [51.1657, 10.4515],
       "FR": [46.2276, 2.2137], "ES": [40.4637, -3.7492],
       "IT": [41.8719, 12.5674]
     };
     const [lat, lon] = coords[country];
-    const weatherApiUrl = `${apiWeather}?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&hourly=temperature_2m,wind_speed_10m&timezone=auto`;
+    const weatherApiUrl = `${apiWeather}?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&hourly=time,temperature_2m,wind_speed_10m&timezone=auto`;
 
     try {
       const response = await fetch(weatherApiUrl);
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      
+      // Hata kontrolü geliştirildi
+      if (!response.ok) {
+        statusDiv.classList.remove('text-muted');
+        statusDiv.classList.add('text-danger');
+        throw new Error(`HTTP error! Status: ${response.status}. The API may not have archival data for this specific time frame.`);
+      }
+      
       const weatherData = await response.json();
 
       if (!weatherData.hourly || !weatherData.hourly.temperature_2m) {
-        throw new Error("No weather data found for the selected range.");
+        throw new Error("No usable weather data found for the selected range.");
       }
 
+      const times = weatherData.hourly.time;
       const temps = weatherData.hourly.temperature_2m;
       const winds = weatherData.hourly.wind_speed_10m;
       
-      // Proxy carbon intensity data generation for simulation purposes
-      const carbonIntensity = temps.map((t, i) => Math.max(0, 150 - (winds[i] * 8) + (t > 15 ? (t - 15) * 5 : 0)));
+      // Proxy carbon intensity data generation
+      const carbonIntensity = temps.map((t, i) => Math.max(20, 150 - (winds[i] * 8) + (t > 15 ? (t - 15) * 5 : 0))); // Min 20 g/kWh
 
-      // Pearson correlation calculation functions
+      // Constants for Normalization (Feature 2)
+      const AVG_CARBON_BASELINE = 80; 
+      const baselineY = new Array(carbonIntensity.length).fill(AVG_CARBON_BASELINE);
+
+      // Pearson correlation calculation
       const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
       const pearsonCorrelation = (x, y) => {
         const mx = mean(x);
@@ -248,46 +389,106 @@ document.addEventListener("DOMContentLoaded", () => {
           x.map(xi => (xi - mx) ** 2).reduce((a, b) => a + b, 0) *
           y.map(yi => (yi - my) ** 2).reduce((a, b) => a + b, 0)
         );
-        return den === 0 ? 0 : (num / den).toFixed(2);
+        return den === 0 ? 0 : (num / den);
       };
 
       const corrWind = pearsonCorrelation(winds, carbonIntensity);
       const corrTemp = pearsonCorrelation(temps, carbonIntensity);
 
-      // Plotly chart creation
+      // --- SCATTER CHART (RELATIONSHIP) ---
       const traceWind = {
-        x: winds, y: carbonIntensity, mode: "markers", name: "Wind Speed (km/h)",
-        marker: { color: "rgba(3, 169, 244, 0.7)", size: 5 }
+        x: winds, y: carbonIntensity, mode: "markers", name: "Wind vs Carbon",
+        marker: { color: "rgba(63, 131, 248, 0.7)", size: 7 } // Blue
       };
       const traceTemp = {
-        x: temps, y: carbonIntensity, mode: "markers", name: "Temperature (°C)",
+        x: temps, y: carbonIntensity, mode: "markers", name: "Temp vs Carbon",
         xaxis: 'x2', yaxis: 'y',
-        marker: { color: "rgba(255, 152, 0, 0.7)", size: 5 }
+        marker: { color: "rgba(234, 88, 12, 0.7)", size: 7 } // Orange
+      };
+      // Normalization Baseline Trace (New Feature 2)
+      const traceBaseline = {
+          x: [...winds, ...temps],
+          y: [...baselineY, ...baselineY],
+          mode: 'lines', 
+          name: `Simulated Avg Carbon (${AVG_CARBON_BASELINE} g/kWh)`,
+          line: { color: 'rgba(239, 68, 68, 0.6)', dash: 'dot', width: 2 },
+          showlegend: true,
+          hoverinfo: 'name+y'
       };
 
-      const layout = {
+      const scatterLayout = {
         title: {
-            text: `<b>Correlation Values | Wind: ${corrWind}, Temp: ${corrTemp}</b>`,
+            text: `<b>Carbon Intensity Correlation | Wind: ${corrWind.toFixed(2)}, Temp: ${corrTemp.toFixed(2)}</b>`,
             font: { size: 18 }
         },
         yaxis: { title: "Carbon Intensity (gCO₂/kWh - Simulation)" },
         xaxis: { title: "Wind Speed (km/h)", domain: [0, 0.48] },
-        xaxis2: { title: "Temperature (°C)", domain: [0.52, 1] },
+        xaxis2: { title: "Temperature (°C)", domain: [0.52, 1], overlaying: 'x' },
         paper_bgcolor: "var(--card-bg)",
-        plot_bgcolor: "var(--card-bg)",
-        font: { family: "Poppins, sans-serif" },
+        plot_bgcolor: "var(--bg-color)",
+        font: { family: "Inter, sans-serif" },
         showlegend: true,
-        legend: { x: 0.5, y: 1.1, xanchor: 'center', orientation: 'h' },
+        legend: { x: 0.5, y: 1.15, xanchor: 'center', orientation: 'h' },
         margin: { l: 60, r: 40, b: 60, t: 80 }
       };
 
-      Plotly.newPlot(chartDiv, [traceWind, traceTemp], layout);
+      Plotly.newPlot(scatterChartDiv, [traceWind, traceTemp, traceBaseline], scatterLayout, {responsive: true});
+
+      // --- TIME SERIES CHART (WHEN) (New Feature 3) ---
+      const tsCarbon = {
+          x: times, y: carbonIntensity, mode: 'lines', name: 'Carbon Intensity (g/kWh)',
+          line: { color: 'rgb(40, 167, 69)', width: 3 }, yaxis: 'y'
+      };
+      const tsWind = {
+          x: times, y: winds, mode: 'lines', name: 'Wind Speed (km/h)',
+          line: { color: 'rgb(63, 131, 248)', dash: 'dot' }, yaxis: 'y2'
+      };
+      const tsTemp = {
+          x: times, y: temps, mode: 'lines', name: 'Temperature (°C)',
+          line: { color: 'rgb(234, 88, 12)', dash: 'dot' }, yaxis: 'y3'
+      };
+      const tsBaseline = {
+          x: times, y: baselineY, mode: 'lines', name: `Avg Baseline (${AVG_CARBON_BASELINE} g/kWh)`,
+          line: { color: 'rgba(239, 68, 68, 0.6)', dash: 'dash', width: 1 }, yaxis: 'y'
+      };
+
+
+      const tsLayout = {
+          title: 'Carbon Intensity & Weather Trends Over Time',
+          xaxis: { title: 'Time (Hourly Data)', type: 'date' },
+          yaxis: { title: 'Carbon Intensity (g/kWh)', side: 'left', linecolor: 'rgb(40, 167, 69)', titlefont: { color: 'rgb(40, 167, 69)' } },
+          yaxis2: { title: 'Wind Speed (km/h)', overlaying: 'y', side: 'right', position: 0.95, linecolor: 'rgb(63, 131, 248)', titlefont: { color: 'rgb(63, 131, 248)' } },
+          yaxis3: { title: 'Temp (°C)', overlaying: 'y', side: 'right', position: 1.0, linecolor: 'rgb(234, 88, 12)', titlefont: { color: 'rgb(234, 88, 12)' } },
+          paper_bgcolor: "var(--card-bg)",
+          plot_bgcolor: "var(--bg-color)",
+          font: { family: "Inter, sans-serif" },
+          margin: { l: 60, r: 60, b: 60, t: 80 }
+      };
+
+      Plotly.newPlot(timeseriesChartDiv, [tsCarbon, tsBaseline, tsWind, tsTemp], tsLayout, {responsive: true});
+
+
+      // --- DYNAMIC INSIGHTS (New Feature 1) ---
+      const insightWind = getCorrelationInsight(corrWind, 'Wind Speed');
+      const insightTemp = getCorrelationInsight(corrTemp, 'Temperature');
+      
+      insightDiv.innerHTML = `
+          <div class="mb-2">${insightWind}</div>
+          <div>${insightTemp}</div>
+          <small class="text-muted mt-2 d-block">The correlation values are based on the Pearson coefficient.</small>
+      `;
+      insightDiv.classList.remove('d-none');
+      statusDiv.classList.remove('text-danger');
+      statusDiv.classList.add('text-muted');
       statusDiv.innerText = `Data loaded successfully for ${country} (${start} → ${end})`;
 
     } catch (error) {
       console.error("Error:", error);
-      statusDiv.innerText = `❌ An error occurred: ${error.message}`;
-      chartDiv.innerHTML = '<p class="text-danger text-center fw-bold">Chart could not be loaded.</p>';
+      statusDiv.classList.remove('text-muted');
+      statusDiv.classList.add('text-danger');
+      statusDiv.innerText = `❌ An error occurred: ${error.message}. Please adjust the date range (max 30 days, ending at least 2 days ago) and try again.`;
+      scatterChartDiv.innerHTML = '<p class="text-danger text-center fw-bold mt-4">Chart could not be loaded. Please check the status message above.</p>';
+      timeseriesChartDiv.innerHTML = '<p class="text-danger text-center fw-bold mt-4">Chart could not be loaded. Please check the status message above.</p>';
     } finally {
       setLoadingState(false);
     }

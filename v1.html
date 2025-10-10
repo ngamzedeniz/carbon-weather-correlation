@@ -57,51 +57,16 @@
     height: 100%;
     font-weight: 500;
   }
-  /* Welcome Widget Styles */
-  #welcome-widget {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(5px);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    opacity: 1;
-    transition: opacity 0.5s ease-out;
-    visibility: visible;
-  }
-  #welcome-widget.hidden {
-    opacity: 0;
-    visibility: hidden;
-  }
-  .welcome-content .icon {
-    font-size: 4rem;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
 </style>
 </head>
 <body>
 
-<div id="welcome-widget">
-  <div class="welcome-content p-4">
-    <div class="icon">🌿</div>
-    <h1 class="display-5 fw-bold mt-3">Carbon & Weather Correlation Explorer</h1>
-    <p class="lead mt-2">This tool visualizes the simulated relationship between carbon intensity<br> and weather data (wind, temperature) for selected European countries.</p>
-    <p class="text-muted mt-4">Select a country and date range, then click "Analyze" to begin.</p>
-  </div>
-</div>
-
 <div class="container">
+  <div class="text-center mb-5">
+    <h1 class="display-5 fw-bold" style="color: #667eea;">🌿 Carbon & Weather Correlation Explorer</h1>
+    <p class="lead text-muted">This tool visualizes the simulated relationship between carbon intensity and weather data (wind, temperature) for selected European countries. Select a country and date range, then click "Analyze" to begin.</p>
+  </div>
+  
   <div class="card mb-4">
     <div class="card-body p-4">
       <div class="row g-3 align-items-end">
@@ -201,10 +166,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const endDateInput = document.getElementById("end");
   const statusDiv = document.getElementById("status");
   const chartDiv = document.getElementById("chart");
-  const welcomeWidget = document.getElementById("welcome-widget");
+  // const welcomeWidget = document.getElementById("welcome-widget"); // Widget kaldırıldı
 
   // === İlk Yükleme Ayarları ===
-  let isFirstLoad = true;
+  // isFirstLoad bayrağı artık sadece widget'ı yönetmek için gerekli değil.
   
   // Varsayılan tarihleri ayarla (son 7 gün)
   const today = new Date();
@@ -234,10 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === Ana Fonksiyon: Veri Yükleme ve Görselleştirme ===
   const loadData = async () => {
-    if (isFirstLoad) {
-      welcomeWidget.classList.add("hidden");
-      isFirstLoad = false;
-    }
+    // Hoş geldiniz widget'ını gizleme kodu kaldırıldı.
 
     const country = countrySelect.value;
     const start = startDateInput.value;
@@ -274,7 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const winds = weatherData.hourly.wind_speed_10m;
       
       // Proxy carbon intensity data generation for simulation purposes
-      // Formula: High Carbon = (Low Wind * Penalty) + (High Temp * Bonus)
       const carbonIntensity = temps.map((t, i) => Math.max(0, 150 - (winds[i] * 8) + (t > 15 ? (t - 15) * 5 : 0)));
 
       // Pearson correlation calculation functions
@@ -300,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       const traceTemp = {
         x: temps, y: carbonIntensity, mode: "markers", name: "Temperature (°C)",
-        xaxis: 'x2', yaxis: 'y', // Use second x-axis
+        xaxis: 'x2', yaxis: 'y',
         marker: { color: "rgba(255, 152, 0, 0.7)", size: 5 }
       };
 
